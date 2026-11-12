@@ -330,7 +330,13 @@ get_view_criteria(struct cycle_filter *filter)
 		LAB_VIEW_CRITERIA_NO_SKIP_WINDOW_SWITCHER
 		| LAB_VIEW_CRITERIA_NO_DIALOG;
 	if (filter->workspace == CYCLE_WORKSPACE_CURRENT) {
-		criteria |= LAB_VIEW_CRITERIA_CURRENT_WORKSPACE;
+		/*
+		 * With per-output workspaces, only list the windows of the
+		 * focused output's workspace, not every visible one
+		 */
+		criteria |= server.workspaces.per_output
+			? LAB_VIEW_CRITERIA_FOCUSED_WORKSPACE
+			: LAB_VIEW_CRITERIA_CURRENT_WORKSPACE;
 	}
 	return criteria;
 }
@@ -421,6 +427,8 @@ init_cycle(struct cycle_filter filter)
 		wlr_log(WLR_DEBUG, "no views to switch between");
 		return false;
 	}
+	wlr_log(WLR_DEBUG, "switching between %d views",
+		wl_list_length(&server.cycle.views));
 	server.cycle.filter = filter;
 
 	if (rc.window_switcher.osd.show) {

@@ -275,6 +275,11 @@ view_matches_criteria(struct view *view, enum lab_view_criteria criteria)
 			return false;
 		}
 	}
+	if (criteria & LAB_VIEW_CRITERIA_FOCUSED_WORKSPACE) {
+		if (view->workspace != server.workspaces.current) {
+			return false;
+		}
+	}
 	if (criteria & LAB_VIEW_CRITERIA_FULLSCREEN) {
 		if (!view->fullscreen) {
 			return false;

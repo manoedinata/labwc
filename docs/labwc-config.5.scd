@@ -642,7 +642,9 @@ extending outward from the snapped edge.
 	workspaces of one output: the focused one (the output of the focused
 	window, or the one under the cursor) for GoToDesktop, and the output
 	of the window for SendToDesktop. Moving a window to another output
-	puts it on that output's current workspace.
+	puts it on that output's current workspace. The window switcher,
+	when limited to the current workspace, lists only the windows of the
+	focused output's workspace.
 
 	Clients of the ext-workspace-v1 protocol see one workspace group per
 	output and can move a workspace to another output (assign), which
