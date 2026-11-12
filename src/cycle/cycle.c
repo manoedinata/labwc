@@ -18,6 +18,7 @@
 #include "ssd.h"
 #include "theme.h"
 #include "view.h"
+#include "workspaces.h"
 
 static bool init_cycle(struct cycle_filter filter);
 static void update_cycle(void);
@@ -276,7 +277,12 @@ get_outputs_by_filter(enum cycle_output_filter output_filter)
 		break;
 	case CYCLE_OUTPUT_FOCUSED: {
 		struct view *view = server.active_view;
-		if (view && output_is_usable(view->output)) {
+		struct workspace *focused = server.workspaces.current;
+		if (server.workspaces.per_output && focused
+				&& output_is_usable(focused->output)) {
+			/* Same output as the windows listed */
+			output = focused->output;
+		} else if (view && output_is_usable(view->output)) {
 			output = view->output;
 		} else {
 			/* Fallback to pointer */
