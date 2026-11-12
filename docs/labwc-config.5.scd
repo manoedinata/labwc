@@ -635,8 +635,8 @@ extending outward from the snapped edge.
 	Workspaces are put on the internal panel (eDP, LVDS or DSI), or on the
 	first output if there is none, unless bound to another output with
 	<outputs> below. An output that has no workspace takes a hidden one.
-	When an output is disconnected its workspaces and windows move to
-	another output, and bound workspaces move back on reconnect.
+	When an output is disconnected or disabled its workspaces and windows
+	move to another output, and move back when it returns.
 
 	GoToDesktop and SendToDesktop with "left" and "right" stay within the
 	workspaces of one output: the focused one (the output of the focused

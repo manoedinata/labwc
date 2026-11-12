@@ -830,6 +830,7 @@ destroy_workspace(struct workspace *workspace)
 	wlr_scene_node_destroy(&workspace->tree->node);
 	zfree(workspace->name);
 	zfree(workspace->output_name);
+	zfree(workspace->evacuated_from);
 	wl_list_remove(&workspace->link);
 
 	wlr_ext_workspace_handle_v1_destroy(workspace->ext_workspace);
@@ -972,10 +973,21 @@ workspaces_update_outputs(void)
 		if (workspace->output_name) {
 			want = output_from_name(workspace->output_name);
 		}
+		if (!want && workspace->evacuated_from) {
+			/* Back to the output it was moved off */
+			want = output_from_name(workspace->evacuated_from);
+		}
+		if (want) {
+			zfree(workspace->evacuated_from);
+		}
 		if (!want && output_is_usable(workspace->output)) {
 			want = workspace->output;
 		}
 		if (!want) {
+			if (workspace->output && !workspace->evacuated_from) {
+				workspace->evacuated_from =
+					xstrdup(workspace->output->wlr_output->name);
+			}
 			want = fallback;
 		}
 		workspace_set_output(workspace, want);
@@ -1059,6 +1071,10 @@ workspaces_on_output_destroy(struct output *output)
 	struct workspace *workspace;
 	wl_list_for_each(workspace, &server.workspaces.all, link) {
 		if (workspace->output == output) {
+			if (!workspace->evacuated_from) {
+				workspace->evacuated_from =
+					xstrdup(output->wlr_output->name);
+			}
 			workspace->output = NULL;
 			wlr_ext_workspace_handle_v1_set_group(
 				workspace->ext_workspace, NULL);
@@ -1149,6 +1165,7 @@ workspaces_move_to_output(struct workspace *workspace, struct output *output,
 	}
 	if (bind) {
 		xstrdup_replace(workspace->output_name, output->wlr_output->name);
+		zfree(workspace->evacuated_from);
 	}
 	if (old == output) {
 		return true;

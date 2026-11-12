@@ -29,6 +29,11 @@ struct workspace {
 	 */
 	struct output *output;
 	char *output_name;
+	/*
+	 * Output the workspace was moved off when that output went away
+	 * (disabled or disconnected); it moves back when it returns
+	 */
+	char *evacuated_from;
 };
 
 void workspaces_init(void);
