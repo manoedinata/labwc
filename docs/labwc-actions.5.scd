@@ -326,6 +326,11 @@ Actions are used in menus and keyboard/mouse bindings.
 	*toggle* [yes|no] Toggle to “last” if already on the workspace that
 	would be the actual destination. Default is no.
 
+	With per-output workspaces, the workspace is shown on its own output,
+	"left" and "right" cycle through the workspaces of the focused output,
+	and switching to a workspace already shown on another output focuses
+	that output.
+
 *<action name="SendToDesktop" to="value" follow="yes" wrap="yes" />*
 	Send active window to workspace.
 

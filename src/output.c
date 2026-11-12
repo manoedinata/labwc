@@ -37,6 +37,7 @@
 #include "regions.h"
 #include "session-lock.h"
 #include "view.h"
+#include "workspaces.h"
 #include "xwayland.h"
 
 #if WLR_HAS_X11_BACKEND
@@ -323,6 +324,8 @@ handle_output_destroy(struct wl_listener *listener, void *data)
 		output->workspace_osd = NULL;
 	}
 
+	workspaces_on_output_destroy(output);
+
 	struct view *view;
 	wl_list_for_each(view, &server.views, link) {
 		if (view->output == output) {
@@ -424,8 +427,11 @@ add_output_to_layout(struct output *output)
 			layout_output, output->scene_output);
 	}
 
-	wlr_ext_workspace_group_handle_v1_output_enter(
-		server.workspaces.ext_group, output->wlr_output);
+	/* Per-output workspace groups: see workspaces_update_outputs() */
+	if (server.workspaces.ext_group) {
+		wlr_ext_workspace_group_handle_v1_output_enter(
+			server.workspaces.ext_group, output->wlr_output);
+	}
 
 	/* (Re-)create regions from config */
 	regions_reconfigure_output(output);
@@ -811,7 +817,10 @@ output_finish(void)
 static void
 output_update_for_layout_change(void)
 {
+	/* Re-home workspaces before views are re-arranged */
+	workspaces_update_outputs();
 	output_update_all_usable_areas(/*layout_changed*/ true);
+	workspaces_update_views();
 	session_lock_update_for_layout_change();
 
 	/*
@@ -911,8 +920,11 @@ output_config_apply(struct wlr_output_configuration_v1 *config)
 		} else if (was_in_layout) {
 			regions_evacuate_output(output);
 
-			wlr_ext_workspace_group_handle_v1_output_leave(
-				server.workspaces.ext_group, output->wlr_output);
+			if (server.workspaces.ext_group) {
+				wlr_ext_workspace_group_handle_v1_output_leave(
+					server.workspaces.ext_group,
+					output->wlr_output);
+			}
 
 			/*
 			 * wlr_output_layout_remove() only unbinds the

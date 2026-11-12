@@ -212,6 +212,13 @@
     Use GoToDesktop left | right to switch workspaces.
     Use SendToDesktop left | right to move windows.
     See man labwc-actions for further information.
+
+    Each output can have its own workspaces, optionally bound to it:
+    <desktops perOutput="yes" number="6">
+      <outputs>
+        <bind workspace="5" output="HDMI-A-1" />
+      </outputs>
+    </desktops>
   -->
   <desktops>
     <popupTime>1000</popupTime>

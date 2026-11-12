@@ -433,6 +433,38 @@ fill_region(xmlNode *node)
 }
 
 static void
+fill_workspace_output_binds(xmlNode *node)
+{
+	xmlNode *child;
+	char *key, *content;
+	LAB_XML_FOR_EACH(node, child, key, content) {
+		if (strcasecmp(key, "bind")) {
+			continue;
+		}
+		struct workspace_output_bind *bind = znew(*bind);
+		xmlNode *attr;
+		char *attr_key, *attr_content;
+		LAB_XML_FOR_EACH(child, attr, attr_key, attr_content) {
+			if (!strcasecmp(attr_key, "workspace")) {
+				xstrdup_replace(bind->workspace, attr_content);
+			} else if (!strcasecmp(attr_key, "output")) {
+				xstrdup_replace(bind->output, attr_content);
+			}
+		}
+		if (string_null_or_empty(bind->workspace)
+				|| string_null_or_empty(bind->output)) {
+			wlr_log(WLR_ERROR, "<desktops><outputs><bind> needs "
+				"both workspace=\"\" and output=\"\"");
+			zfree(bind->workspace);
+			zfree(bind->output);
+			zfree(bind);
+			continue;
+		}
+		wl_list_append(&rc.workspace_config.output_binds, &bind->link);
+	}
+}
+
+static void
 fill_regions(xmlNode *node)
 {
 	/* TODO: make sure <regions> is empty here */
@@ -1153,6 +1185,8 @@ entry(xmlNode *node, char *nodename, char *content)
 		fill_libinput_category(node);
 	} else if (!strcasecmp(nodename, "regions")) {
 		fill_regions(node);
+	} else if (!strcasecmp(nodename, "outputs.desktops")) {
+		fill_workspace_output_binds(node);
 	} else if (!strcasecmp(nodename, "fields.windowSwitcher")) {
 		fill_window_switcher_fields(node);
 	} else if (!strcasecmp(nodename, "windowRules")) {
@@ -1435,6 +1469,8 @@ entry(xmlNode *node, char *nodename, char *content)
 		rc.workspace_config.popuptime = atoi(content);
 	} else if (!strcasecmp(nodename, "initial.desktops")) {
 		xstrdup_replace(rc.workspace_config.initial_workspace_name, content);
+	} else if (!strcasecmp(nodename, "perOutput.desktops")) {
+		set_bool(content, &rc.workspace_config.per_output);
 	} else if (!strcasecmp(nodename, "number.desktops")) {
 		rc.workspace_config.min_nr_workspaces = MAX(1, atoi(content));
 	} else if (!strcasecmp(nodename, "popupShow.resize")) {
@@ -1559,6 +1595,7 @@ rcxml_init(void)
 		wl_list_init(&rc.mousebinds);
 		wl_list_init(&rc.libinput_categories);
 		wl_list_init(&rc.workspace_config.workspaces);
+		wl_list_init(&rc.workspace_config.output_binds);
 		wl_list_init(&rc.regions);
 		wl_list_init(&rc.window_switcher.osd.fields);
 		wl_list_init(&rc.window_rules);
@@ -2166,6 +2203,14 @@ rcxml_finish(void)
 		wl_list_remove(&w->link);
 		zfree(w->name);
 		zfree(w);
+	}
+
+	struct workspace_output_bind *b, *b_tmp;
+	wl_list_for_each_safe(b, b_tmp, &rc.workspace_config.output_binds, link) {
+		wl_list_remove(&b->link);
+		zfree(b->workspace);
+		zfree(b->output);
+		zfree(b);
 	}
 
 	regions_destroy(NULL, &rc.regions);

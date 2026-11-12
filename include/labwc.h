@@ -255,8 +255,14 @@ struct server {
 	/* Workspaces */
 	struct {
 		struct wl_list all;  /* struct workspace.link */
+		/*
+		 * In per-output mode, @current is the workspace of the
+		 * focused output (the output of the focused view, or the
+		 * one under the cursor).
+		 */
 		struct workspace *current;
 		struct workspace *last;
+		bool per_output;
 		struct wlr_ext_workspace_manager_v1 *ext_manager;
 		struct wlr_ext_workspace_group_handle_v1 *ext_group;
 		struct {

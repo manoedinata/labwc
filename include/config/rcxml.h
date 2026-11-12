@@ -68,6 +68,12 @@ struct workspace_config {
 	char *name;
 };
 
+struct workspace_output_bind {
+	struct wl_list link; /* struct rcxml.workspace_config.output_binds */
+	char *workspace; /* workspace name or 1-based index */
+	char *output;    /* output (connector) name, e.g. HDMI-A-1 */
+};
+
 struct rcxml {
 	/* from command line */
 	char *config_dir;
@@ -189,6 +195,9 @@ struct rcxml {
 		char *initial_workspace_name;
 		char *prefix;
 		struct wl_list workspaces;  /* struct workspace_config.link */
+		/* Each output shows its own workspace (needs restart) */
+		bool per_output;
+		struct wl_list output_binds; /* struct workspace_output_bind.link */
 	} workspace_config;
 
 	/* Regions */

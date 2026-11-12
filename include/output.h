@@ -7,6 +7,9 @@
 
 #define LAB_NR_LAYERS (4)
 
+struct workspace;
+struct wlr_ext_workspace_group_handle_v1;
+
 struct output {
 	struct wl_list link; /* server.outputs */
 	struct wlr_output *wlr_output;
@@ -17,6 +20,10 @@ struct output {
 	struct wlr_scene_tree *cycle_osd_tree;
 	struct wlr_scene_tree *session_lock_tree;
 	struct wlr_scene_buffer *workspace_osd;
+
+	/* Per-output workspaces only: workspace shown on this output */
+	struct workspace *workspace;
+	struct wlr_ext_workspace_group_handle_v1 *ext_group;
 
 	/* In output-relative scene coordinates */
 	struct wlr_box usable_area;
