@@ -2,6 +2,7 @@
 #include "cycle.h"
 #include <assert.h>
 #include <wlr/types/wlr_scene.h>
+#include <wlr/types/wlr_output_layout.h>
 #include <wlr/util/box.h>
 #include <wlr/util/log.h>
 #include "common/lab-scene-rect.h"
@@ -47,6 +48,23 @@ update_preview_outlines(struct view *view)
 	}
 
 	struct wlr_box geo = ssd_max_extents(view);
+	/*
+	 * Keep the outline from spilling onto an adjacent output when the
+	 * view belongs to one output: maximized/tiled/fullscreen views, and
+	 * any view with per-output workspaces (its workspace is not shown
+	 * on the other outputs). The outline is drawn above layer-shell
+	 * panels, so a spill would show even where the view is covered.
+	 */
+	if ((server.workspaces.per_output || !view_is_floating(view))
+			&& output_is_usable(view->output)) {
+		struct wlr_box output_box;
+		wlr_output_layout_get_box(server.output_layout,
+			view->output->wlr_output, &output_box);
+		struct wlr_box clipped;
+		if (wlr_box_intersection(&clipped, &geo, &output_box)) {
+			geo = clipped;
+		}
+	}
 	lab_scene_rect_set_size(rect, geo.width, geo.height);
 	wlr_scene_node_set_position(&rect->tree->node, geo.x, geo.y);
 }
