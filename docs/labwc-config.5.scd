@@ -644,7 +644,8 @@ extending outward from the snapped edge.
 	of the window for SendToDesktop. Moving a window to another output
 	puts it on that output's current workspace. The window switcher,
 	when limited to the current workspace, lists only the windows of the
-	focused output's workspace.
+	focused output's workspace. When the cursor moves to another output,
+	keyboard focus moves to the topmost window there.
 
 	Clients of the ext-workspace-v1 protocol see one workspace group per
 	output and can move a workspace to another output (assign), which

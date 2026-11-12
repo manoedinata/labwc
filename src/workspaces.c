@@ -11,6 +11,7 @@
 #include <wlr/types/wlr_ext_workspace_v1.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_scene.h>
+#include <wlr/types/wlr_seat.h>
 #include "buffer.h"
 #include "common/font.h"
 #include "common/graphic-helpers.h"
@@ -21,6 +22,7 @@
 #include "input/keyboard.h"
 #include "labwc.h"
 #include "output.h"
+#include "session-lock.h"
 #include "show-desktop.h"
 #include "theme.h"
 #include "view.h"
@@ -1099,6 +1101,31 @@ workspaces_update_focus_from_cursor(void)
 		return;
 	}
 	server.workspaces.current = output->workspace;
+
+	/*
+	 * Keyboard focus follows the cursor to the other output, so keys
+	 * go to what is under the user's eyes without an extra click.
+	 * Not while dragging, holding a button, or with a layer-shell
+	 * surface (launcher, lock screen) or the window switcher focused.
+	 */
+	struct seat *seat = &server.seat;
+	if (server.input_mode != LAB_INPUT_STATE_PASSTHROUGH
+			|| seat->focused_layer
+			|| seat->wlr_seat->pointer_state.button_count
+			|| server.session_lock_manager->locked) {
+		return;
+	}
+	struct view *active_view = server.active_view;
+	if (active_view && active_view->output == output) {
+		return;
+	}
+	struct view *view;
+	for_each_view(view, &server.views, LAB_VIEW_CRITERIA_CURRENT_WORKSPACE) {
+		if (!view->minimized && view->output == output) {
+			desktop_focus_view(view, /*raise*/ false);
+			return;
+		}
+	}
 }
 
 /*
