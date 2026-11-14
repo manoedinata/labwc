@@ -602,6 +602,7 @@ bool view_is_modal_dialog(struct view *view);
 struct view *view_get_modal_dialog(struct view *view);
 
 bool view_on_output(struct view *view, struct output *output);
+void view_notify_outputs(struct view *view);
 
 /**
  * view_has_strut_partial() - returns true for views that reserve space

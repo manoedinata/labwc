@@ -6,6 +6,7 @@
 #include "labwc.h"
 #include "output.h"
 #include "view.h"
+#include "workspaces.h"
 
 /* wlr signals */
 static void
@@ -122,9 +123,17 @@ handle_new_outputs(struct wl_listener *listener, void *data)
 	 * destroy events so its fine to just relay the current state and let
 	 * wlr_foreign_toplevel handle the rest.
 	 */
+	struct view *view = wlr_toplevel->view;
+	/*
+	 * A view on a hidden workspace is not visible on any output, so
+	 * only report outputs while its workspace is shown. Clients such
+	 * as taskbars can then tell which windows are on the current
+	 * workspace (per output when <desktops perOutput="yes">).
+	 */
+	bool shown = workspaces_is_visible(view->workspace);
 	struct output *output;
 	wl_list_for_each(output, &server.outputs, link) {
-		if (view_on_output(wlr_toplevel->view, output)) {
+		if (shown && view_on_output(view, output)) {
 			wlr_foreign_toplevel_handle_v1_output_enter(
 				wlr_toplevel->handle, output->wlr_output);
 		} else {
