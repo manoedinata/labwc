@@ -2,6 +2,7 @@
 #include "cycle.h"
 #include <assert.h>
 #include <wlr/types/wlr_scene.h>
+#include <wlr/types/wlr_output_layout.h>
 #include <wlr/util/box.h>
 #include <wlr/util/log.h>
 #include "common/lab-scene-rect.h"
@@ -18,6 +19,7 @@
 #include "ssd.h"
 #include "theme.h"
 #include "view.h"
+#include "workspaces.h"
 
 static bool init_cycle(struct cycle_filter filter);
 static void update_cycle(void);
@@ -46,6 +48,23 @@ update_preview_outlines(struct view *view)
 	}
 
 	struct wlr_box geo = ssd_max_extents(view);
+	/*
+	 * Keep the outline from spilling onto an adjacent output when the
+	 * view belongs to one output: maximized/tiled/fullscreen views, and
+	 * any view with per-output workspaces (its workspace is not shown
+	 * on the other outputs). The outline is drawn above layer-shell
+	 * panels, so a spill would show even where the view is covered.
+	 */
+	if ((server.workspaces.per_output || !view_is_floating(view))
+			&& output_is_usable(view->output)) {
+		struct wlr_box output_box;
+		wlr_output_layout_get_box(server.output_layout,
+			view->output->wlr_output, &output_box);
+		struct wlr_box clipped;
+		if (wlr_box_intersection(&clipped, &geo, &output_box)) {
+			geo = clipped;
+		}
+	}
 	lab_scene_rect_set_size(rect, geo.width, geo.height);
 	wlr_scene_node_set_position(&rect->tree->node, geo.x, geo.y);
 }
@@ -276,7 +295,12 @@ get_outputs_by_filter(enum cycle_output_filter output_filter)
 		break;
 	case CYCLE_OUTPUT_FOCUSED: {
 		struct view *view = server.active_view;
-		if (view && output_is_usable(view->output)) {
+		struct workspace *focused = server.workspaces.current;
+		if (server.workspaces.per_output && focused
+				&& output_is_usable(focused->output)) {
+			/* Same output as the windows listed */
+			output = focused->output;
+		} else if (view && output_is_usable(view->output)) {
 			output = view->output;
 		} else {
 			/* Fallback to pointer */
@@ -330,7 +354,13 @@ get_view_criteria(struct cycle_filter *filter)
 		LAB_VIEW_CRITERIA_NO_SKIP_WINDOW_SWITCHER
 		| LAB_VIEW_CRITERIA_NO_DIALOG;
 	if (filter->workspace == CYCLE_WORKSPACE_CURRENT) {
-		criteria |= LAB_VIEW_CRITERIA_CURRENT_WORKSPACE;
+		/*
+		 * With per-output workspaces, only list the windows of the
+		 * focused output's workspace, not every visible one
+		 */
+		criteria |= server.workspaces.per_output
+			? LAB_VIEW_CRITERIA_FOCUSED_WORKSPACE
+			: LAB_VIEW_CRITERIA_CURRENT_WORKSPACE;
 	}
 	return criteria;
 }
@@ -421,6 +451,8 @@ init_cycle(struct cycle_filter filter)
 		wlr_log(WLR_DEBUG, "no views to switch between");
 		return false;
 	}
+	wlr_log(WLR_DEBUG, "switching between %d views",
+		wl_list_length(&server.cycle.views));
 	server.cycle.filter = filter;
 
 	if (rc.window_switcher.osd.show) {

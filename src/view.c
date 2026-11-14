@@ -270,6 +270,12 @@ view_matches_criteria(struct view *view, enum lab_view_criteria criteria)
 		return false;
 	}
 	if (criteria & LAB_VIEW_CRITERIA_CURRENT_WORKSPACE) {
+		/* i.e. visible; per-output workspaces may show several */
+		if (!workspaces_is_visible(view->workspace)) {
+			return false;
+		}
+	}
+	if (criteria & LAB_VIEW_CRITERIA_FOCUSED_WORKSPACE) {
 		if (view->workspace != server.workspaces.current) {
 			return false;
 		}
@@ -453,6 +459,7 @@ view_discover_output(struct view *view, struct wlr_box *geometry)
 
 	if (output && output != view->output) {
 		view->output = output;
+		workspaces_on_view_output_changed(view);
 		return true;
 	}
 
@@ -492,6 +499,7 @@ view_set_output(struct view *view, struct output *output)
 		return;
 	}
 	view->output = output;
+	workspaces_on_view_output_changed(view);
 	/* Show fullscreen views above top-layer */
 	if (view->fullscreen) {
 		desktop_update_top_layer_visibility();

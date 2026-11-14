@@ -1365,8 +1365,17 @@ run_action(struct view *view, struct action *action,
 		 * removed the action during the initial parsing step as it is
 		 * a required argument for both SendToDesktop and GoToDesktop.
 		 */
+		/*
+		 * With per-output workspaces, relative targets ("left" etc.)
+		 * of SendToDesktop are relative to the view's own workspace
+		 */
+		struct workspace *anchor = server.workspaces.current;
+		if (server.workspaces.per_output
+				&& action->type == ACTION_TYPE_SEND_TO_DESKTOP) {
+			anchor = view->workspace;
+		}
 		struct workspace *target_workspace = workspaces_find(
-			server.workspaces.current, to, wrap);
+			anchor, to, wrap);
 		if (action->type == ACTION_TYPE_GO_TO_DESKTOP) {
 			bool toggle = action_get_bool(action, "toggle", false);
 			if (target_workspace == server.workspaces.current
@@ -1379,6 +1388,12 @@ run_action(struct view *view, struct action *action,
 		}
 		if (action->type == ACTION_TYPE_SEND_TO_DESKTOP) {
 			view_move_to_workspace(view, target_workspace);
+			/* The workspace may live on another output */
+			if (server.workspaces.per_output
+					&& output_is_usable(target_workspace->output)
+					&& view->output != target_workspace->output) {
+				view_move_to_output(view, target_workspace->output);
+			}
 			follow = action_get_bool(action, "follow", true);
 
 			/* Ensure that the focus is not on another desktop */

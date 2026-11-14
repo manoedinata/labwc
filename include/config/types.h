@@ -64,6 +64,11 @@ enum lab_view_criteria {
 
 	/* Includes omnipresent (visible on all desktops) views */
 	LAB_VIEW_CRITERIA_CURRENT_WORKSPACE       = 1 << 0,
+	/*
+	 * Only the focused workspace; differs from the above only with
+	 * per-output workspaces, where several workspaces are visible
+	 */
+	LAB_VIEW_CRITERIA_FOCUSED_WORKSPACE       = 1 << 3,
 
 	/* Positive criteria */
 	LAB_VIEW_CRITERIA_FULLSCREEN              = 1 << 1,

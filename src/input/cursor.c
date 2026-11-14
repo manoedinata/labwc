@@ -36,6 +36,7 @@
 #include "resize-outlines.h"
 #include "ssd.h"
 #include "view.h"
+#include "workspaces.h"
 #include "xwayland.h"
 
 #if WLR_HAS_LIBINPUT_BACKEND
@@ -626,6 +627,8 @@ cursor_get_resize_edges(struct wlr_cursor *cursor, const struct cursor_context *
 bool
 cursor_process_motion(uint32_t time, double *sx, double *sy)
 {
+	workspaces_update_focus_from_cursor();
+
 	/* If the mode is non-passthrough, delegate to those functions. */
 	if (server.input_mode == LAB_INPUT_STATE_MOVE) {
 		process_cursor_move(time);

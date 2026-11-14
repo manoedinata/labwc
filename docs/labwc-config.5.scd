@@ -626,6 +626,44 @@ extending outward from the snapped edge.
 *<desktops><prefix>*
 	Set the prefix to use when using "number" above. Default is "Workspace".
 
+*<desktops perOutput="no">*
+	[yes|no] Give each output its own set of workspaces. Every workspace
+	lives on one output and each output shows its own current workspace,
+	so switching workspaces on one output leaves the others alone.
+	Default is no. Changing this setting requires a restart.
+
+	Workspaces are put on the internal panel (eDP, LVDS or DSI), or on the
+	first output if there is none, unless bound to another output with
+	<outputs> below. An output that has no workspace takes a hidden one.
+	When an output is disconnected or disabled its workspaces and windows
+	move to another output, and move back when it returns.
+
+	GoToDesktop and SendToDesktop with "left" and "right" stay within the
+	workspaces of one output: the focused one (the output of the focused
+	window, or the one under the cursor) for GoToDesktop, and the output
+	of the window for SendToDesktop. Moving a window to another output
+	puts it on that output's current workspace. The window switcher,
+	when limited to the current workspace, lists only the windows of the
+	focused output's workspace. When the cursor moves to another output,
+	keyboard focus moves to the topmost window there.
+
+	Clients of the ext-workspace-v1 protocol see one workspace group per
+	output and can move a workspace to another output (assign), which
+	also binds it to that output until the next reconfigure.
+
+*<desktops><outputs><bind workspace="" output="" />*
+	With perOutput="yes", bind a workspace (name or index starting at 1)
+	to an output name, for example:
+
+```
+<desktops perOutput="yes" number="6">
+  <outputs>
+    <bind workspace="5" output="HDMI-A-1" />
+    <bind workspace="6" output="HDMI-A-1" />
+  </outputs>
+</desktops>
+```
+
 ## THEME
 
 *<theme><name>*
