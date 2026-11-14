@@ -626,8 +626,8 @@ extending outward from the snapped edge.
 *<desktops><prefix>*
 	Set the prefix to use when using "number" above. Default is "Workspace".
 
-*<desktops perOutput="no">*
-	[yes|no] Give each output its own set of workspaces. Every workspace
+*<desktops perOutput="no">* [yes|no]
+	Give each output its own set of workspaces. Every workspace
 	lives on one output and each output shows its own current workspace,
 	so switching workspaces on one output leaves the others alone.
 	Default is no. Changing this setting requires a restart.
