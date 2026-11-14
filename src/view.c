@@ -1600,7 +1600,18 @@ view_move_to_workspace(struct view *view, struct workspace *workspace)
 		view->workspace = workspace;
 		wlr_scene_node_reparent(&view->scene_tree->node,
 			workspace->view_trees[view->layer]);
+		view_notify_outputs(view);
 	}
+}
+
+/*
+ * Re-send the foreign-toplevel output state. It depends on whether the
+ * view's workspace is shown, so call this when that may have changed.
+ */
+void
+view_notify_outputs(struct view *view)
+{
+	wl_signal_emit_mutable(&view->events.new_outputs, NULL);
 }
 
 static void

@@ -436,6 +436,16 @@ first_on_output(struct output *output, struct workspace *exclude)
 	return NULL;
 }
 
+/* Foreign-toplevel outputs depend on workspace visibility */
+static void
+notify_view_outputs(void)
+{
+	struct view *view;
+	wl_list_for_each(view, &server.views, link) {
+		view_notify_outputs(view);
+	}
+}
+
 static void
 refresh_visibility(void)
 {
@@ -446,6 +456,7 @@ refresh_visibility(void)
 		wlr_ext_workspace_handle_v1_set_active(
 			workspace->ext_workspace, visible);
 	}
+	notify_view_outputs();
 }
 
 /*
@@ -747,6 +758,7 @@ workspaces_switch_to(struct workspace *target, bool update_focus)
 
 	/* Make sure new views will spawn on the new workspace */
 	server.workspaces.current = target;
+	notify_view_outputs();
 
 	struct view *grabbed_view = server.grabbed_view;
 	if (grabbed_view) {
